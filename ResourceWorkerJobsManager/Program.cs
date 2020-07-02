@@ -17,6 +17,13 @@ namespace ResourceWorkerJobsManager
             Task AddNewJobTask = Task.Run(() => QueueManager.AddWorkItem(job));
         }
 
+        public static TimeSpan TimeTaken(Action action)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            action();
+            stopwatch.Stop();
+            return stopwatch.Elapsed;
+        }
         private static TimeSpan randomTime(int max)
         {
             Random rnd = new Random();

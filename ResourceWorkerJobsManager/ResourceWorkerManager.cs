@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -53,11 +54,25 @@ namespace ResourceWorkerJobsManager
                 WorkerJob workerJob = QueueManager.GetJobItem();
                 if (workerJob != null)
                 {
+                    //Stopwatch stopwatch = Stopwatch.StartNew();
+                    //var maxHandleTimes = this.workers.Select(i => i.Value.MaxHandleTime);
+                    //stopwatch.Stop();
+                    //Console.WriteLine($"---------------------------- action taken: {stopwatch.Elapsed} ------------------------");
+                    
                     var duration = workerJob.Duration.TotalMilliseconds;
-                    var closestWorkerId = workersMaxHandleTime
-                        .Select(kvp => new { kvp, distance = Math.Abs(kvp.Value - duration) })
-                        .OrderBy(o => o.distance).First().kvp.Key;
-                    Task.Run(() => workers[closestWorkerId].DoWork(workerJob.Method, workerJob.Duration));
+                    var closestWorkerIds = workersMaxHandleTime
+                        .Where(kvp => kvp.Value >= duration)
+                        .Select(kvp => (kvp, distance: kvp.Value - duration))
+                        .OrderBy(o => o.distance);
+                    if (closestWorkerIds.Count() > 0)
+                    {
+                        var workerId = closestWorkerIds.First().kvp.Key;
+                        _ = Task.Run(() => workers[workerId].DoWork(workerJob.Method, workerJob.Duration));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Did not find suitable worker for {workerJob} job.");
+                    }
                 }
             }
         }
