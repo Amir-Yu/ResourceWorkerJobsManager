@@ -23,7 +23,7 @@ namespace ResourceWorkerJobsManager
 
         public static void AddWorkItem(WorkerJob workerItem)
         {
-            bool success = false;
+            bool success;
             do
             {
                 success = (workerItem.HighPriority) ? highPriorityQueue.TryAdd(workerItem) : lowPriorityQueue.TryAdd(workerItem);
@@ -33,7 +33,7 @@ namespace ResourceWorkerJobsManager
         public static WorkerJob GetJobItem()
         {
             WorkerJob workerItem = null;
-            bool success = false;
+            bool success;
             do
             {
                 if (highPriorityQueue.Count == 0 && lowPriorityQueue.Count == 0)  

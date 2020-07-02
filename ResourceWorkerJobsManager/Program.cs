@@ -45,7 +45,6 @@ namespace ResourceWorkerJobsManager
             bool priority = rnd.NextDouble() > 0.5;
             Action action = () => {
             var msg = ((priority) ? "High" : "Low") + $" priority job id {id} is done on {ts.TotalMilliseconds} ms";
-            Thread.Sleep(ts);
                     Console.ForegroundColor = (priority) ? ConsoleColor.Green : ConsoleColor.DarkMagenta;
                     Console.WriteLine(msg);
                     Console.ForegroundColor = ConsoleColor.White;

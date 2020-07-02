@@ -10,7 +10,7 @@ namespace ResourceWorkerJobsManager
 {
     class ResourceWorkerManager
     {
-        private object locker = new object();
+        private object objSyncer = new object();
         private int workersCapacity;
         private ConcurrentDictionary<int, ResourceWorker> workers;
         private ConcurrentDictionary<int, double> workersMaxHandleTime;
@@ -18,19 +18,19 @@ namespace ResourceWorkerJobsManager
         public ResourceWorkerManager(int workersCapacity = 100)
         {
             this.workersCapacity = workersCapacity;
-            this.workers = new ConcurrentDictionary<int, ResourceWorker>(1, workersCapacity);
-            this.workersMaxHandleTime = new ConcurrentDictionary<int, double>(1, workersCapacity);
+            workers = new ConcurrentDictionary<int, ResourceWorker>(1, workersCapacity);
+            workersMaxHandleTime = new ConcurrentDictionary<int, double>(1, workersCapacity);
         }
 
         public bool AddWorker(int id, TimeSpan maxHandleTime)
         {
             bool result = false;
-            if (workers.Count < this.workersCapacity)
+            if (workers.Count < workersCapacity)
             {
-                lock (locker)
+                lock (objSyncer)
                 {
-                    result = this.workers.TryAdd(id, new ResourceWorker(id, maxHandleTime)) &&
-                        this.workersMaxHandleTime.TryAdd(id, maxHandleTime.TotalMilliseconds);
+                    result = workers.TryAdd(id, new ResourceWorker(id, maxHandleTime)) &&
+                        workersMaxHandleTime.TryAdd(id, maxHandleTime.TotalMilliseconds);
                 }
             }
             var msg = result ? $"worker id: {id} created, maxHandleTime: {maxHandleTime.TotalMilliseconds} ms" : $"worker {id} not created";
@@ -40,9 +40,9 @@ namespace ResourceWorkerJobsManager
 
         public bool RemoveWorker(int id)
         {
-            lock (locker)
+            lock (objSyncer)
             {
-                return (this.workers.TryRemove(id, out _) && this.workersMaxHandleTime.TryRemove(id, out _));
+                return workers.TryRemove(id, out _) && workersMaxHandleTime.TryRemove(id, out _);
             }
         }
 
@@ -54,7 +54,7 @@ namespace ResourceWorkerJobsManager
                 if (workerJob != null)
                 {
                     var duration = workerJob.Duration.TotalMilliseconds;
-                    var closestWorkerId = this.workersMaxHandleTime
+                    var closestWorkerId = workersMaxHandleTime
                         .Select(kvp => new { kvp, distance = Math.Abs(kvp.Value - duration) })
                         .OrderBy(o => o.distance).First().kvp.Key;
                     Task.Run(() => workers[closestWorkerId].DoWork(workerJob.Method, workerJob.Duration));

@@ -13,10 +13,10 @@ namespace ResourceWorkerJobsManager
 
         public WorkerJob(int id, Action method, TimeSpan duration, bool highPriority)
         {
-            this.Id = id;
-            this.Method = method;
-            this.Duration = duration;
-            this.HighPriority = highPriority;
+            Id = id;
+            Method = method;
+            Duration = duration;
+            HighPriority = highPriority;
         }
     }
 }
